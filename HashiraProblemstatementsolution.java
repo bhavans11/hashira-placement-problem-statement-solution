@@ -1,73 +1,71 @@
 import java.math.BigInteger;
 
 public class HashiraProblemstatementsolution {
-    // Example input: replace with your full JSON string as needed
-    static String jsonInput =
-      "{ \"keys\": { \"n\": 10, \"k\": 7 },"
-    + "\"1\": { \"base\": \"6\", \"value\": \"13444211440455345511\" },"
-    + "\"2\": { \"base\": \"15\", \"value\": \"aed7015a346d635\" },"
-    + "\"3\": { \"base\": \"15\", \"value\": \"6aeeb69631c227c\" },"
-    + "\"4\": { \"base\": \"16\", \"value\": \"e1b5e05623d881f\" },"
-    + "\"5\": { \"base\": \"8\", \"value\": \"316034514573652620673\" },"
-    + "\"6\": { \"base\": \"3\", \"value\": \"2122212201122002221120200210011020220200\" },"
-    + "\"7\": { \"base\": \"3\", \"value\": \"20120221122211000100210021102001201112121\" },"
-    + "\"8\": { \"base\": \"6\", \"value\": \"20220554335330240002224253\" },"
-    + "\"9\": { \"base\": \"12\", \"value\": \"45153788322a1255483\" },"
-    + "\"10\": { \"base\": \"7\", \"value\": \"1101613130313526312514143\" } }";
+    static String[] jsonInputs = {
+        // Test Case 1
+        "{ \"keys\": { \"n\": 4, \"k\": 3 },"
+      + " \"1\": { \"base\": \"10\", \"value\": \"4\" },"
+      + " \"2\": { \"base\": \"2\", \"value\": \"111\" },"
+      + " \"3\": { \"base\": \"10\", \"value\": \"12\" },"
+      + " \"6\": { \"base\": \"4\", \"value\": \"213\" } }",
+        // Test Case 2
+        "{ \"keys\": { \"n\": 10, \"k\": 7 },"
+      + " \"1\": { \"base\": \"6\", \"value\": \"13444211440455345511\" },"
+      + " \"2\": { \"base\": \"15\", \"value\": \"aed7015a346d635\" },"
+      + " \"3\": { \"base\": \"15\", \"value\": \"6aeeb69631c227c\" },"
+      + " \"4\": { \"base\": \"16\", \"value\": \"e1b5e05623d881f\" },"
+      + " \"5\": { \"base\": \"8\", \"value\": \"316034514573652620673\" },"
+      + " \"6\": { \"base\": \"3\", \"value\": \"2122212201122002221120200210011020220200\" },"
+      + " \"7\": { \"base\": \"3\", \"value\": \"20120221122211000100210021102001201112121\" },"
+      + " \"8\": { \"base\": \"6\", \"value\": \"20220554335330240002224253\" },"
+      + " \"9\": { \"base\": \"12\", \"value\": \"45153788322a1255483\" },"
+      + " \"10\": { \"base\": \"7\", \"value\": \"1101613130313526312514143\" } }"
+    };
 
     public static void main(String[] args) {
-        // Find n and k
-        int n = getIntValue(jsonInput, "\"n\":", ",");
-        int k = getIntValue(jsonInput, "\"k\":", "}");
+        for (int tcase = 0; tcase < jsonInputs.length; tcase++) {
+            String jsonInput = jsonInputs[tcase];
+            int n = getIntValue(jsonInput, "\"n\":", ",");
+            int k = getIntValue(jsonInput, "\"k\":", "}");
 
-        String[] bases = new String[n];
-        String[] values = new String[n];
-        BigInteger[] decimals = new BigInteger[n];
+            String[] bases = new String[n];
+            String[] values = new String[n];
+            BigInteger[] decimals = new BigInteger[n];
 
-        // Parse each share from string
-        for (int i = 1; i <= n; i++) {
-            String key = "\"" + i + "\": {";
-            int idx = jsonInput.indexOf(key);
-            bases[i-1] = getStringValue(jsonInput, "\"base\": \"", "\"", idx);
-            values[i-1] = getStringValue(jsonInput, "\"value\": \"", "\"", idx);
-            decimals[i-1] = new BigInteger(values[i-1], Integer.parseInt(bases[i-1]));
+            int rootNum = 0;
+            for (int i = 1; rootNum < n; i++) {
+                String key = "\"" + i + "\": {";
+                int idx = jsonInput.indexOf(key);
+                if (idx == -1) continue;
+                bases[rootNum] = getStringValue(jsonInput, "\"base\": \"", "\"", idx);
+                values[rootNum] = getStringValue(jsonInput, "\"value\": \"", "\"", idx);
+                decimals[rootNum] = new BigInteger(values[rootNum], Integer.parseInt(bases[rootNum]));
+                rootNum++;
+            }
+
+            // Get correct set (first k roots)
+            BigInteger secret = BigInteger.ONE;
+            for (int i = 0; i < k; i++) secret = secret.multiply(decimals[i]);
+            // Corrupt share (first not in correct set, so index k)
+            BigInteger corrupt = decimals[k];
+
+            System.out.println("Testcase " + (tcase + 1) + ":");
+            System.out.println("Secret (product of first k roots):\n" + secret);
+            System.out.println("Corrupt share (root " + (k + 1) + "):\n" + corrupt);
+            System.out.println();
         }
-
-        // Output roots as decimals
-        System.out.println("Roots (decimal):");
-        for (int i = 0; i < n; i++)
-            System.out.println((i+1) + ": " + decimals[i]);
-
-        // Get correct set (first k roots)
-        System.out.println("\nCorrect Set:");
-        for (int i = 0; i < k; i++)
-            System.out.println("Root " + (i+1) + ": " + decimals[i]);
-
-        // Choose a corrupt share (just next root not in correct set)
-        System.out.println("\nCorrupt Share:");
-        System.out.println("Root " + (k+1) + ": " + decimals[k]);
-
-        // Simulated secret: product of correct set decimals
-        BigInteger secret = BigInteger.ONE;
-        for (int i = 0; i < k; i++)
-            secret = secret.multiply(decimals[i]);
-
-        System.out.println("\nSecret (product of correct set decimals):");
-        System.out.println(secret);
     }
 
-    // Extract integer after key
     static int getIntValue(String str, String start, String end) {
         int idx1 = str.indexOf(start);
         int idx2 = str.indexOf(end, idx1);
         String sub = str.substring(idx1 + start.length(), idx2).replaceAll("[^0-9]", "");
         return Integer.parseInt(sub);
     }
-
-    // Extract string between start and end after a certain index
     static String getStringValue(String str, String start, String end, int fromIdx) {
         int idx1 = str.indexOf(start, fromIdx);
         int idx2 = str.indexOf(end, idx1 + start.length());
         return str.substring(idx1 + start.length(), idx2);
     }
 }
+
